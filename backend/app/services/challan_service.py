@@ -1,17 +1,42 @@
+from app.db.database import SessionLocal
+from app.models.penalty import Penalty
+
+
 def calculate_fine(data):
-    fines = {
-        "helmet": 1000,
-        "triple_riding": 1500,
-        "drunk_driving": 5000
-    }
 
-    base_fine = fines.get(data.violation.lower(), 500)
+    db = SessionLocal()
 
-    if data.repeat_offense:
-        base_fine *= 2
+    try:
 
-    return {
-        "violation": data.violation,
-        "state": data.state,
-        "fine": base_fine
-    }
+        penalty = (
+            db.query(Penalty)
+            .filter(
+                Penalty.state == data.state,
+                Penalty.violation.ilike(
+                    f"%{data.violation}%"
+                )
+            )
+            .first()
+        )
+
+        if not penalty:
+
+            return {
+                "error": (
+                    f"No violation found for "
+                    f"'{data.violation}'"
+                )
+            }
+
+        fine_amount = penalty.fine_amount
+
+        return {
+            "state": penalty.state,
+            "violation": penalty.violation,
+            "section": penalty.section,
+            "fine_amount": fine_amount,
+            "source_url": penalty.source_url
+        }
+
+    finally:
+        db.close()
