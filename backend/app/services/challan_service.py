@@ -8,6 +8,8 @@ def calculate_fine(data):
 
     try:
 
+        print("Searching for:", data.violation)
+
         penalty = (
             db.query(Penalty)
             .filter(
@@ -19,6 +21,8 @@ def calculate_fine(data):
             .first()
         )
 
+        print("Found:", penalty)
+
         if not penalty:
 
             return {
@@ -28,13 +32,11 @@ def calculate_fine(data):
                 )
             }
 
-        fine_amount = penalty.fine_amount
-
         return {
             "state": penalty.state,
             "violation": penalty.violation,
             "section": penalty.section,
-            "fine_amount": fine_amount,
+            "fine_amount": penalty.fine_amount,
             "source_url": penalty.source_url
         }
 

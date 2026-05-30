@@ -14,8 +14,9 @@ export default function Home() {
 
   const [state, setState] = useState("Karnataka");
 
-  const [violation, setViolation] =
-  useState("No Helmet");
+  const [violation, setViolation] = useState("");
+
+  const [violations, setViolations] = useState<any[]>([]);
 
   const [fine, setFine] = useState<any>(null);
 
@@ -44,6 +45,31 @@ export default function Home() {
       window.removeEventListener("offline", updateStatus);
     };
   }, []);
+
+  useEffect(() => {
+  const fetchViolations = async () => {
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/violations/${state}`
+      );
+
+      const data = await res.json();
+
+      console.log("Violations:", data);
+
+      setViolations(data);
+
+      if (data.length > 0) {
+        setViolation(data[0].violation);
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+     fetchViolations();
+},     [state]);
 
 
 const handleSend = async () => {
@@ -92,8 +118,17 @@ const handleSend = async () => {
 };
 const calculateFine = async () => {
   try {
+    setLoading(true);
+
+    console.log("Sending Request:", {
+      state,
+      violation,
+      vehicle_type: "bike",
+      repeat_offense: false,
+    });
+
     const res = await fetch(
-      "http://127.0.0.1:8000/calculate-fine",
+      "http://127.0.0.1:8000/calculate",
       {
         method: "POST",
         headers: {
@@ -102,16 +137,21 @@ const calculateFine = async () => {
         body: JSON.stringify({
           state,
           violation,
+          vehicle_type: "bike",
+          repeat_offense: false,
         }),
       }
     );
 
     const data = await res.json();
 
-    setFine(data);
+    console.log("Backend Response:", data);
 
+    setFine(data);
   } catch (err) {
-    console.error(err);
+    console.error("Calculate Fine Error:", err);
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -204,13 +244,19 @@ const calculateFine = async () => {
           </select>
 
           <select
-          value={violation}
-          onChange={(e) => setViolation(e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3">
-            <option>No Helmet</option>
-            <option>Triple Riding</option>
-            <option>Signal Jump</option>
-          </select>
+              value={violation}
+              onChange={(e) => setViolation(e.target.value)}
+              className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3"
+        >
+              {violations.map((item) => (
+                 <option
+                    key={item.id}
+                    value={item.violation}
+        >
+                    {item.violation}
+                 </option>
+  ))}
+           </select>
 
           <select className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3">
             <option>Bike</option>
@@ -229,24 +275,47 @@ const calculateFine = async () => {
             Estimated Fine
           </p>
           {fine && (
-            <div className="mt-6 bg-zinc-800 rounded-2xl p-4">
-              <p className="text-zinc-400 text-sm mb-1">
-                Estimated Fine
-              </p>
+  <div className="mt-6 bg-zinc-800 rounded-2xl p-4">
+    <p className="text-zinc-400 text-sm mb-1">
+      Estimated Fine
+    </p>
 
-              <h3 className="text-3xl font-bold text-yellow-400">
-                ₹{fine.fine}
-              </h3>
+    {fine.error ? (
+      <p className="text-red-400">
+        {fine.error}
+      </p>
+    ) : (
+      <>
+        <h3 className="text-3xl font-bold text-yellow-400">
+          {fine.fine_amount}
+        </h3>
 
-              <p className="text-sm text-zinc-500 mt-2">
-                {fine.section}
-              </p>
-            </div>
-          )}
-          <p className="text-sm text-zinc-500 mt-2">
-            Under MV Act Section 129
+        <p className="text-sm text-zinc-400 mt-3">
+          <strong>Violation:</strong>{" "}
+          {fine.violation}
+        </p>
+
+        <p className="text-sm text-zinc-400 mt-2">
+          <strong>Section:</strong>{" "}
+          {fine.section}
+        </p>
+
+        <p className="text-sm text-zinc-400 mt-2">
+          <strong>State:</strong>{" "}
+          {fine.state}
+        </p>
+
+        {fine.source_url && (
+          <p className="text-xs text-zinc-500 mt-3 break-all">
+            Source: {fine.source_url}
           </p>
-        </div>
+        )}
+      </>
+    )}
+  </div>
+)}
+          
+       </div>
       </div>
     </main>
   );

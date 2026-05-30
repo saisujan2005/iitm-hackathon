@@ -22,10 +22,7 @@ def save_penalties(records):
                 violation=record["violation"],
                 section=record["section"],
                 fine_amount=record["fine_amount"],
-                source_url=(
-                    "https://vijayanagarapolice.karnataka.gov.in/"
-                    "storage/pdf-files/traffic%20rules%20%20and%20fines%20e.pdf"
-                )
+                source_url=record["source_url"]
             )
 
             db.add(penalty)
