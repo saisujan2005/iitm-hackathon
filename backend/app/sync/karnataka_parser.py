@@ -29,7 +29,10 @@ def extract_penalties(text):
                         "state": "Karnataka",
                         "violation": violation,
                         "section": section,
-                        "fine_amount": fine
+                        "fine_amount": fine,
+                        "source_url":
+                                     "https://vijayanagarapolice.karnataka.gov.in/storage/pdf-files/traffic%20rules%20%20and%20fines%20e.pdf",
+
                     }
                 )
 

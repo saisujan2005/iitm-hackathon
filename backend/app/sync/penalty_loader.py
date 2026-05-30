@@ -10,7 +10,7 @@ def save_penalties(records):
 
         # Remove old Karnataka records
         db.query(Penalty).filter(
-            Penalty.state == "Karnataka"
+            Penalty.state == records[0]["state"]
         ).delete()
 
         db.commit()
@@ -22,7 +22,7 @@ def save_penalties(records):
                 violation=record["violation"],
                 section=record["section"],
                 fine_amount=record["fine_amount"],
-                source_url=record["source_url"]
+                source_url=record.get("source_url", "")
             )
 
             db.add(penalty)
