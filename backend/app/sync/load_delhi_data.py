@@ -1,15 +1,15 @@
 from app.sync.delhi_scraper import (
-    scrape_delhi
+    fetch_delhi_penalties
 )
 
 from app.sync.penalty_loader import (
     save_penalties
 )
 
-records = scrape_delhi()
+records = fetch_delhi_penalties()
+
+print(f"Found {len(records)} records")
 
 save_penalties(records)
 
-print(
-    f"Saved {len(records)} Delhi penalties"
-)
+print("Done")

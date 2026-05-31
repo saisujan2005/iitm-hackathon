@@ -1,31 +1,57 @@
+# app/sync/delhi_scraper.py
+
+import re
 import requests
 
-from app.sync.delhi_parser import (
-    parse_delhi_table
-)
 
-URL = (
-    "https://traffic.delhipolice.gov.in/"
-    "traffic-offences"
-)
+URL = "https://traffic.delhipolice.gov.in/traffic-offences"
 
 
-def scrape_delhi():
+def fetch_delhi_penalties():
 
-    response = requests.get(URL)
+    html = requests.get(URL).text
 
-    return parse_delhi_table(
-        response.text
+    rows = re.findall(
+        r"<tr>(.*?)</tr>",
+        html,
+        flags=re.DOTALL
     )
 
+    records = []
 
-if __name__ == "__main__":
+    for row in rows:
 
-    records = scrape_delhi()
+        cols = re.findall(
+            r"<td.*?>(.*?)</td>",
+            row,
+            flags=re.DOTALL
+        )
 
-    print(
-        f"Found {len(records)} records"
-    )
+        if len(cols) != 5:
+            continue
 
-    for item in records[:10]:
-        print(item)
+        clean = []
+
+        for col in cols:
+
+            text = re.sub(
+                r"<.*?>",
+                "",
+                col
+            )
+
+            text = (
+                text.replace("&nbsp;", " ")
+                .strip()
+            )
+
+            clean.append(text)
+
+        records.append({
+            "state": "Delhi",
+            "violation": clean[1],
+            "section": clean[2],
+            "fine_amount": clean[3]
+        })
+
+    return records

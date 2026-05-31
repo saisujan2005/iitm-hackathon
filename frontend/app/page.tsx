@@ -24,6 +24,9 @@ export default function Home() {
 
   const [online, setOnline] = useState(true);
 
+  const [locationName, setLocationName] =
+  useState("Detecting...");
+
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -31,6 +34,83 @@ export default function Home() {
         "Hello 👋 Ask me anything about traffic laws or challans.",
     },
   ]);
+  useEffect(() => {
+
+    if (!navigator.geolocation) {
+      setLocationName("Location not supported");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        try {
+
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+          );
+
+          const data = await res.json();
+
+          console.log("Location:", data);
+
+          const detectedState =
+            data.address.state || "";
+
+          const city =
+            data.address.city ||
+            data.address.town ||
+            data.address.village ||
+            "";
+
+          setLocationName(
+            `${city}, ${detectedState}`
+          );
+
+          if (
+            detectedState
+              .toLowerCase()
+              .includes("karnataka")
+          ) {
+            setState("Karnataka");
+          }
+
+          if (
+            detectedState
+              .toLowerCase()
+              .includes("delhi")
+          ) {
+            setState("Delhi");
+          }
+
+        } catch (err) {
+          console.error(
+            "Reverse geocoding failed:",
+            err
+          );
+
+          setLocationName(
+            "Location unavailable"
+          );
+        }
+      },
+
+      (err) => {
+        console.error(
+          "Geolocation error:",
+          err
+        );
+
+        setLocationName(
+          "Location unavailable"
+        );
+      }
+    );
+
+  }, []);
 
   useEffect(() => {
     const updateStatus = () => {
@@ -70,7 +150,61 @@ export default function Home() {
 
      fetchViolations();
 },     [state]);
+  useEffect(() => {
 
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        try {
+
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+          );
+
+          const data = await res.json();
+
+          const detectedState =
+            data.address.state || "";
+
+          const city =
+            data.address.city ||
+            data.address.town ||
+            data.address.village ||
+            "";
+
+          setLocationName(
+            `${city}, ${detectedState}`
+          );
+
+          if (
+            detectedState
+              .toLowerCase()
+              .includes("karnataka")
+          ) {
+            setState("Karnataka");
+          }
+
+          if (
+            detectedState
+              .toLowerCase()
+              .includes("delhi")
+          ) {
+            setState("Delhi");
+          }
+
+        } catch (err) {
+          console.error(err);
+        }
+      },
+      (err) => {
+        console.error(err);
+      }
+    );
+
+  }, []);
 
 const handleSend = async () => {
   if (!query.trim()) return;
@@ -184,7 +318,7 @@ const calculateFine = async () => {
         <div>
           <p className="font-medium">Location Detected</p>
           <p className="text-sm text-zinc-400">
-            Bangalore, Karnataka
+            {locationName}
           </p>
         </div>
       </div>
