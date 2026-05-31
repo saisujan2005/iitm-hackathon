@@ -9,6 +9,8 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
+
+
 export default function Home() {
   const [query, setQuery] = useState("");
 
@@ -20,12 +22,21 @@ export default function Home() {
 
   const [fine, setFine] = useState<any>(null);
 
+  const [ocrFile, setOcrFile] = useState<File | null>(null);
+
+  const [ocrResult, setOcrResult] = useState<any>(null);
+
+  const [ocrLoading, setOcrLoading] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const [online, setOnline] = useState(true);
 
-  const [locationName, setLocationName] =
-  useState("Detecting...");
+  const [locationName, setLocationName] = useState("Detecting...");
+
+  const [city, setCity] = useState("");
+  
+  const [detectedState, setDetectedState] = useState("");
 
   const [messages, setMessages] = useState([
     {
@@ -220,7 +231,7 @@ const handleSend = async () => {
   setQuery("");
 
   try {
-    const res = await fetch("http://127.0.0.1:8000/chat", {
+    const res = await fetch("http://127.0.0.1:8000/chat/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -234,7 +245,7 @@ const handleSend = async () => {
 
     const aiMessage = {
       role: "assistant",
-      content: data.response,
+      content: data.answer,
     };
 
     setMessages((prev) => [...prev, aiMessage]);
@@ -250,6 +261,91 @@ const handleSend = async () => {
     ]);
   }
 };
+
+const detectLocation = () => {
+
+  if (!navigator.geolocation) return;
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      try {
+
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+        );
+
+        const data = await res.json();
+
+        setCity(
+             data.address.county || ""
+        );
+
+        setDetectedState(
+            data.address.state || ""
+      );
+
+        const detectedState =
+          data.address.state;
+
+        console.log(
+          "Detected State:",
+           detectedState
+);  
+
+        if (
+          detectedState?.includes(
+            "Karnataka"
+          )
+        ) {
+          setState("Karnataka");
+        }
+
+        else if (
+          detectedState?.includes(
+            "Delhi"
+          )
+        ) {
+          setState("Delhi");
+        }
+
+        else if (
+          detectedState?.includes(
+            "Maharashtra"
+          )
+        ) {
+          setState("Maharashtra");
+        }
+
+        else if (
+          detectedState?.includes(
+             "Tamil Nadu"
+       )
+     ) {
+          setState(
+           "Tamil Nadu"
+     );
+  }
+
+      } catch (err) {
+
+        console.error(err);
+
+      }
+
+    }
+  );
+};useEffect(() => {
+
+  detectLocation();
+
+}, []);
+
+
+
 const calculateFine = async () => {
   try {
     setLoading(true);
@@ -286,6 +382,44 @@ const calculateFine = async () => {
     console.error("Calculate Fine Error:", err);
   } finally {
     setLoading(false);
+  }
+};
+
+const uploadChallan = async () => {
+
+  if (!ocrFile) return;
+
+  try {
+
+    setOcrLoading(true);
+
+    const formData = new FormData();
+
+    formData.append(
+      "file",
+      ocrFile
+    );
+
+    const res = await fetch(
+      "http://127.0.0.1:8000/ocr/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+
+    setOcrResult(data);
+
+  } catch (err) {
+
+    console.error(err);
+
+  } finally {
+
+    setOcrLoading(false);
+
   }
 };
 
@@ -368,6 +502,16 @@ const calculateFine = async () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-4 mb-5">
+
+        <button
+  onClick={detectLocation}
+  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl mb-3"
+>
+  📍 Detect My Location
+</button>
+
+
+
           <select
           value={state}
           onChange={(e) => setState(e.target.value)}
@@ -375,6 +519,7 @@ const calculateFine = async () => {
             <option>Karnataka</option>
             <option>Delhi</option>
             <option>Maharashtra</option>
+            <option>Tamil Nadu</option>
           </select>
 
           <select
@@ -451,6 +596,67 @@ const calculateFine = async () => {
           
        </div>
       </div>
+      {/* OCR Upload */}
+
+<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mt-6">
+
+  <h2 className="text-xl font-semibold mb-4">
+    📸 Challan OCR
+  </h2>
+
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+
+      if (e.target.files?.[0]) {
+
+        setOcrFile(
+          e.target.files[0]
+        );
+
+      }
+
+    }}
+    className="mb-4"
+  />
+
+  <button
+    onClick={uploadChallan}
+    className="bg-green-600 hover:bg-green-700 px-5 py-3 rounded-xl"
+  >
+    Analyze Challan
+  </button>
+
+  {ocrLoading && (
+
+    <p className="mt-4 text-zinc-400">
+      Analyzing image...
+    </p>
+
+  )}
+
+  {ocrResult && (
+
+    <div className="mt-6 bg-zinc-800 rounded-xl p-4">
+
+      <h3 className="font-semibold mb-3">
+        OCR Result
+      </h3>
+
+      <pre className="text-sm whitespace-pre-wrap">
+        {JSON.stringify(
+          ocrResult,
+          null,
+          2
+        )}
+      </pre>
+
+    </div>
+
+  )}
+
+</div>
     </main>
   );
 }
