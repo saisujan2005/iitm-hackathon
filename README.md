@@ -1,40 +1,92 @@
-<<<<<<< HEAD
-# iitm-hackathon
-=======
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DriveLegal
 
-## Getting Started
+AI-powered legal assistant for Indian traffic laws.
 
-First, run the development server:
+## Features
+
+* Challan Fine Calculator
+* Traffic Law Chatbot
+* RAG over Motor Vehicles Act, 1988
+* OCR-based Challan Analysis
+* Automatic Location Detection
+
+---
+
+## Backend Setup
+
+### 1. Create Virtual Environment
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+python -m venv venv
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Activate Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Windows:**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+venv\Scripts\activate
+```
 
-## Learn More
+### 3. Install Dependencies
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pip install -r requirements.txt
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Configure Environment Variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Create a `.env` file in the backend directory:
 
-## Deploy on Vercel
+```env
+DATABASE_URL=YOUR_DATABASE_URL_HERE
+REDIS_URL=YOUR_REDIS_URL_HERE
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 5. Build RAG Index
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
->>>>>>> origin/master
+```bash
+python -m app.rag.build_index
+```
+
+### 6. Run Backend
+
+```bash
+uvicorn app.main:app --reload
+```
+
+**Backend URL:**
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+**Frontend URL:**
+
+```text
+http://localhost:3000
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and update the values:
+
+```env
+DATABASE_URL=YOUR_DATABASE_URL_HERE
+REDIS_URL=YOUR_REDIS_URL_HERE
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+```
+

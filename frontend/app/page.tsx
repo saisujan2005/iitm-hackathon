@@ -369,47 +369,49 @@ const uploadChallan = async () => {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-5">
+        <div className="mb-4">
+  <button
+    onClick={detectLocation}
+    className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl"
+  >
+    📍 Detect My Location
+  </button>
+</div>
 
-        <button
-  onClick={detectLocation}
-  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl mb-3"
->
-  📍 Detect My Location
-</button>
+<div className="grid md:grid-cols-3 gap-4 mb-5">
 
+  <select
+    value={state}
+    onChange={(e) => setState(e.target.value)}
+    className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3"
+  >
+    <option>Karnataka</option>
+    <option>Delhi</option>
+    <option>Maharashtra</option>
+    <option>Tamil Nadu</option>
+  </select>
 
+  <select
+    value={violation}
+    onChange={(e) => setViolation(e.target.value)}
+    className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3"
+  >
+    {violations.map((item) => (
+      <option
+        key={item.id}
+        value={item.violation}
+      >
+        {item.violation}
+      </option>
+    ))}
+  </select>
 
-          <select
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3">
-            <option>Karnataka</option>
-            <option>Delhi</option>
-            <option>Maharashtra</option>
-            <option>Tamil Nadu</option>
-          </select>
+  <select className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3">
+    <option>Bike</option>
+    <option>Car</option>
+  </select>
 
-          <select
-              value={violation}
-              onChange={(e) => setViolation(e.target.value)}
-              className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3"
-        >
-              {violations.map((item) => (
-                 <option
-                    key={item.id}
-                    value={item.violation}
-        >
-                    {item.violation}
-                 </option>
-  ))}
-           </select>
-
-          <select className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3">
-            <option>Bike</option>
-            <option>Car</option>
-          </select>
-        </div>
+</div>
 
         <button
         onClick={calculateFine}
@@ -472,22 +474,39 @@ const uploadChallan = async () => {
     📸 Challan OCR
   </h2>
 
-  <input
-    type="file"
-    accept="image/*"
-    onChange={(e) => {
+  <div className="flex items-center gap-4">
 
-      if (e.target.files?.[0]) {
+  <label
+    className="
+      cursor-pointer
+      bg-zinc-800
+      hover:bg-zinc-700
+      px-5
+      py-3
+      rounded-xl
+      border
+      border-zinc-700
+    "
+  >
+    📄 Upload Challan
 
-        setOcrFile(
-          e.target.files[0]
-        );
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => {
 
-      }
+        if (e.target.files?.[0]) {
 
-    }}
-    className="mb-4"
-  />
+          setOcrFile(
+            e.target.files[0]
+          );
+
+        }
+
+      }}
+    />
+  </label>
 
   <button
     onClick={uploadChallan}
@@ -495,6 +514,24 @@ const uploadChallan = async () => {
   >
     Analyze Challan
   </button>
+
+
+
+</div>
+
+{ocrFile && (
+
+  <p className="text-sm text-zinc-400 mt-3">
+
+    Selected File:
+    {" "}
+    {ocrFile.name}
+
+  </p>
+
+)}
+
+ 
 
   {ocrLoading && (
 
@@ -506,23 +543,102 @@ const uploadChallan = async () => {
 
   {ocrResult && (
 
-    <div className="mt-6 bg-zinc-800 rounded-xl p-4">
+  <div className="mt-6 bg-zinc-800 rounded-xl p-5 border border-zinc-700">
 
-      <h3 className="font-semibold mb-3">
-        OCR Result
-      </h3>
+    <h3 className="font-semibold text-lg mb-4">
+      📸 Challan Analysis
+    </h3>
 
-      <pre className="text-sm whitespace-pre-wrap">
-        {JSON.stringify(
-          ocrResult,
-          null,
-          2
-        )}
-      </pre>
+    <div className="space-y-3">
+
+      <div>
+        <p className="text-zinc-400 text-sm">
+          Vehicle Number
+        </p>
+
+        <p>
+          {ocrResult.ocr?.vehicle_number ||
+            "N/A"}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-zinc-400 text-sm">
+          Section
+        </p>
+
+        <p>
+          {ocrResult.ocr?.section ||
+            "Not Available"}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-zinc-400 text-sm">
+          Fine Amount
+        </p>
+
+        <p>
+          ₹{
+            ocrResult.ocr?.fine_amount ||
+            "Not Available"
+          }
+        </p>
+      </div>
+
+      {ocrResult.official_record && (
+
+        <>
+          <div>
+            <p className="text-zinc-400 text-sm">
+              Violation
+            </p>
+
+            <p>
+              {
+                ocrResult.official_record
+                  .violation
+              }
+            </p>
+          </div>
+
+          <div>
+            <p className="text-zinc-400 text-sm">
+              Legal Explanation
+            </p>
+
+            <p className="text-sm">
+              {
+                ocrResult.official_record
+                  .explanation
+              }
+            </p>
+          </div>
+
+          <div>
+            <p className="text-green-400 font-medium">
+              ✅ Verified against database
+            </p>
+          </div>
+        </>
+
+      )}
+
+      {ocrResult.message && (
+
+        <div>
+          <p className="text-yellow-400">
+            ⚠ {ocrResult.message}
+          </p>
+        </div>
+
+      )}
 
     </div>
 
-  )}
+  </div>
+
+)}
 
 </div>
     </main>

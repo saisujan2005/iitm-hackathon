@@ -3,7 +3,8 @@ from fastapi import UploadFile
 from fastapi import File
 
 from app.services.ocr_service import (
-    extract_challan_details
+    extract_challan_details,
+    explain_violation
 )
 
 from app.ai.db_tools import (
@@ -39,6 +40,11 @@ async def upload_challan(
 
         if penalty:
 
+            explanation = explain_violation(
+                penalty.violation,
+                penalty.section
+            )
+
             return {
 
                 "ocr": details,
@@ -58,13 +64,20 @@ async def upload_challan(
                         penalty.section,
 
                     "source":
-                        penalty.source_url
+                        penalty.source_url,
+
+                    "explanation":
+                        explanation
                 }
             }
 
     return {
+
         "ocr": details,
 
         "message":
-                  "No matching violation found in local database."
+            "OCR completed successfully. The detected section is not currently available in the local penalty database.",
+
+        "detected_section":
+           section    
     }
