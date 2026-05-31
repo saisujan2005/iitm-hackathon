@@ -9,6 +9,8 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
+
+
 export default function Home() {
   const [query, setQuery] = useState("");
 
@@ -29,6 +31,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const [online, setOnline] = useState(true);
+
+  const [city, setCity] = useState("");
+  const [detectedState, setDetectedState] = useState("");
 
   const [messages, setMessages] = useState([
     {
@@ -122,6 +127,91 @@ const handleSend = async () => {
     ]);
   }
 };
+
+const detectLocation = () => {
+
+  if (!navigator.geolocation) return;
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      try {
+
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+        );
+
+        const data = await res.json();
+
+        setCity(
+             data.address.county || ""
+        );
+
+        setDetectedState(
+            data.address.state || ""
+      );
+
+        const detectedState =
+          data.address.state;
+
+        console.log(
+          "Detected State:",
+           detectedState
+);  
+
+        if (
+          detectedState?.includes(
+            "Karnataka"
+          )
+        ) {
+          setState("Karnataka");
+        }
+
+        else if (
+          detectedState?.includes(
+            "Delhi"
+          )
+        ) {
+          setState("Delhi");
+        }
+
+        else if (
+          detectedState?.includes(
+            "Maharashtra"
+          )
+        ) {
+          setState("Maharashtra");
+        }
+
+        else if (
+          detectedState?.includes(
+             "Tamil Nadu"
+       )
+     ) {
+          setState(
+           "Tamil Nadu"
+     );
+  }
+
+      } catch (err) {
+
+        console.error(err);
+
+      }
+
+    }
+  );
+};useEffect(() => {
+
+  detectLocation();
+
+}, []);
+
+
+
 const calculateFine = async () => {
   try {
     setLoading(true);
@@ -228,7 +318,9 @@ const uploadChallan = async () => {
         <div>
           <p className="font-medium">Location Detected</p>
           <p className="text-sm text-zinc-400">
-            Bangalore, Karnataka
+            {city && detectedState
+             ? `${city}, ${detectedState}`
+              : "Detecting location..."}
           </p>
         </div>
       </div>
@@ -278,6 +370,16 @@ const uploadChallan = async () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-4 mb-5">
+
+        <button
+  onClick={detectLocation}
+  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl mb-3"
+>
+  📍 Detect My Location
+</button>
+
+
+
           <select
           value={state}
           onChange={(e) => setState(e.target.value)}
@@ -285,6 +387,7 @@ const uploadChallan = async () => {
             <option>Karnataka</option>
             <option>Delhi</option>
             <option>Maharashtra</option>
+            <option>Tamil Nadu</option>
           </select>
 
           <select
