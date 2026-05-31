@@ -20,6 +20,12 @@ export default function Home() {
 
   const [fine, setFine] = useState<any>(null);
 
+  const [ocrFile, setOcrFile] = useState<File | null>(null);
+
+  const [ocrResult, setOcrResult] = useState<any>(null);
+
+  const [ocrLoading, setOcrLoading] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const [online, setOnline] = useState(true);
@@ -86,7 +92,7 @@ const handleSend = async () => {
   setQuery("");
 
   try {
-    const res = await fetch("http://127.0.0.1:8000/chat", {
+    const res = await fetch("http://127.0.0.1:8000/chat/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -100,7 +106,7 @@ const handleSend = async () => {
 
     const aiMessage = {
       role: "assistant",
-      content: data.response,
+      content: data.answer,
     };
 
     setMessages((prev) => [...prev, aiMessage]);
@@ -152,6 +158,44 @@ const calculateFine = async () => {
     console.error("Calculate Fine Error:", err);
   } finally {
     setLoading(false);
+  }
+};
+
+const uploadChallan = async () => {
+
+  if (!ocrFile) return;
+
+  try {
+
+    setOcrLoading(true);
+
+    const formData = new FormData();
+
+    formData.append(
+      "file",
+      ocrFile
+    );
+
+    const res = await fetch(
+      "http://127.0.0.1:8000/ocr/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+
+    setOcrResult(data);
+
+  } catch (err) {
+
+    console.error(err);
+
+  } finally {
+
+    setOcrLoading(false);
+
   }
 };
 
@@ -317,6 +361,67 @@ const calculateFine = async () => {
           
        </div>
       </div>
+      {/* OCR Upload */}
+
+<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mt-6">
+
+  <h2 className="text-xl font-semibold mb-4">
+    📸 Challan OCR
+  </h2>
+
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+
+      if (e.target.files?.[0]) {
+
+        setOcrFile(
+          e.target.files[0]
+        );
+
+      }
+
+    }}
+    className="mb-4"
+  />
+
+  <button
+    onClick={uploadChallan}
+    className="bg-green-600 hover:bg-green-700 px-5 py-3 rounded-xl"
+  >
+    Analyze Challan
+  </button>
+
+  {ocrLoading && (
+
+    <p className="mt-4 text-zinc-400">
+      Analyzing image...
+    </p>
+
+  )}
+
+  {ocrResult && (
+
+    <div className="mt-6 bg-zinc-800 rounded-xl p-4">
+
+      <h3 className="font-semibold mb-3">
+        OCR Result
+      </h3>
+
+      <pre className="text-sm whitespace-pre-wrap">
+        {JSON.stringify(
+          ocrResult,
+          null,
+          2
+        )}
+      </pre>
+
+    </div>
+
+  )}
+
+</div>
     </main>
   );
 }

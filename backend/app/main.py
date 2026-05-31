@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from app.api.routes import challan, laws, chat
+from app.api.routes import challan, laws, chat, ocr
 from app.db.database import Base, engine
 from app.models.source import Source
 from app.models.penalty import Penalty
 from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI(title="DriveLegal API")
 
@@ -29,4 +30,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.include_router(
+    ocr.router
 )
