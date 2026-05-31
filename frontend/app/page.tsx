@@ -38,6 +38,8 @@ export default function Home() {
   
   const [detectedState, setDetectedState] = useState("");
 
+  const [history, setHistory] = useState<any[]>([]);
+
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -122,6 +124,31 @@ export default function Home() {
     );
 
   }, []);
+  useEffect(() => {
+
+  const savedFine =
+    localStorage.getItem("lastFine");
+
+  if (savedFine) {
+
+    setFine(
+      JSON.parse(savedFine)
+    );
+  }
+
+  const savedHistory =
+    localStorage.getItem(
+      "searchHistory"
+    );
+
+  if (savedHistory) {
+
+    setHistory(
+      JSON.parse(savedHistory)
+    );
+  }
+
+}, []);
 
   useEffect(() => {
     const updateStatus = () => {
@@ -149,6 +176,25 @@ export default function Home() {
       console.log("Violations:", data);
 
       setViolations(data);
+
+      localStorage.setItem(
+        `violations-${state}`,
+        JSON.stringify(data)
+      );
+
+      const cached =
+        localStorage.getItem(
+          `violations-${state}`
+        );
+
+      if (cached) {
+
+        const data =
+          JSON.parse(cached);
+
+        setViolations(data);
+
+      }
 
       if (data.length > 0) {
         setViolation(data[0].violation);
@@ -378,6 +424,31 @@ const calculateFine = async () => {
     console.log("Backend Response:", data);
 
     setFine(data);
+    localStorage.setItem(
+      "lastFine",
+      JSON.stringify(data)
+    );
+    const entry = {
+    state,
+    violation,
+    fine:
+      data.fine_amount ||
+      "Unknown",
+    time:
+      new Date().toLocaleTimeString(),
+  };
+
+  const updated = [
+    entry,
+    ...history,
+  ].slice(0, 5);
+
+  setHistory(updated);
+
+  localStorage.setItem(
+    "searchHistory",
+    JSON.stringify(updated)
+  );
   } catch (err) {
     console.error("Calculate Fine Error:", err);
   } finally {
@@ -594,7 +665,36 @@ const uploadChallan = async () => {
       </>
     )}
   </div>
+  
 )}
+    {history.length > 0 && (
+
+      <div className="mt-6 bg-zinc-800 rounded-xl p-4">
+
+        <h3 className="font-semibold mb-3">
+          Recent Searches
+        </h3>
+
+        {history.map((item, index) => (
+
+          <div
+            key={index}
+            className="py-2 border-b border-zinc-700"
+          >
+
+            <p>{item.violation}</p>
+
+            <p className="text-xs text-zinc-400">
+              {item.state} • ₹{item.fine}
+            </p>
+
+          </div>
+
+        ))}
+
+      </div>
+
+    )}
           
        </div>
       </div>
