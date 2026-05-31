@@ -81,3 +81,33 @@ If a field is missing, return null.
             "date": None,
             "fine_amount": None
         }
+    
+
+def explain_violation(
+    violation: str,
+    section: str
+):
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"""
+You are DriveLegal AI.
+
+Explain this traffic violation in simple language.
+
+Violation:
+{violation}
+
+Section:
+{section}
+
+Keep the explanation under 4 sentences.
+
+Mention:
+- What the violation means
+- Why it is illegal
+- Safety reason
+"""
+    )
+
+    return response.text    
