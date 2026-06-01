@@ -9,6 +9,30 @@ AI-powered legal assistant for Indian traffic laws.
 * RAG over Motor Vehicles Act, 1988
 * OCR-based Challan Analysis
 * Automatic Location Detection
+* Offline Support with Cached Data
+* Challan Fine Calculator Works Offline
+
+---
+
+## Offline Support
+
+DriveLegal is designed to provide a seamless experience even when internet connectivity is unavailable.
+
+### Offline Capabilities
+
+* Challan Fine Calculator works completely offline using locally cached fine and violation data.
+* Previously accessed legal information and frequently used resources can be stored in cache for faster access.
+* Users can continue checking challan penalties and common traffic law information without an active internet connection.
+* Cached data is automatically synchronized and updated when the device reconnects to the internet.
+
+### Online-Only Features
+
+The following features require an internet connection:
+
+* AI-powered Traffic Law Chatbot
+* OCR-based Challan Analysis (if cloud processing is enabled)
+* Real-time legal updates and database synchronization
+* Automatic location-based services (depending on device permissions and connectivity)
 
 ---
 
@@ -89,4 +113,5 @@ DATABASE_URL=YOUR_DATABASE_URL_HERE
 REDIS_URL=YOUR_REDIS_URL_HERE
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
 ```
+
 
