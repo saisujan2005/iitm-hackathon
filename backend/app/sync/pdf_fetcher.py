@@ -3,7 +3,16 @@ import requests
 
 def download_pdf(url: str):
 
-    response = requests.get(url, timeout=30)
+    headers = {
+        "User-Agent":
+        "Mozilla/5.0"
+    }
+
+    response = requests.get(
+        url,
+        headers=headers,
+        timeout=30
+    )
 
     response.raise_for_status()
 
