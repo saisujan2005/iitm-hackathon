@@ -47,6 +47,24 @@ export default function Home() {
         "Hello 👋 Ask me anything about traffic laws or challans.",
     },
   ]);
+const states = [
+  "Andhra Pradesh",
+  "Delhi",
+  "Gujarat",
+  "Jharkhand",
+  "Karnataka",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Meghalaya",
+  "Mizoram",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Telangana",
+  "Uttar Pradesh",
+  "West Bengal",
+];
+
   useEffect(() => {
 
     if (!navigator.geolocation) {
@@ -588,10 +606,11 @@ const uploadChallan = async () => {
     onChange={(e) => setState(e.target.value)}
     className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3"
   >
-    <option>Karnataka</option>
-    <option>Delhi</option>
-    <option>Maharashtra</option>
-    <option>Tamil Nadu</option>
+    {states.map((s) => (
+      <option key={s} value={s}>
+        {s}
+      </option>
+    ))}
   </select>
 
   <select
