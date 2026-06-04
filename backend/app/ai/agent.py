@@ -3,7 +3,6 @@ import json
 from google import genai
 
 from app.rag.rag_service import answer_with_rag
-
 from app.config import GEMINI_API_KEY
 
 from app.ai.db_tools import (
@@ -19,15 +18,31 @@ client = genai.Client(
 def extract_intent(question: str):
 
     prompt = f"""
-Extract the traffic violation and state.
+Extract the traffic violation and state from the question.
 
 Return ONLY valid JSON.
 
-Example:
+Examples:
+
+Question: helmet fine in punjab
 
 {{
-    "state": "Delhi",
+    "state": "Punjab",
+    "violation": "Helmet"
+}}
+
+Question: triple riding fine in telangana
+
+{{
+    "state": "Telangana",
     "violation": "Triple Riding"
+}}
+
+Question: what is the minimum age for driving
+
+{{
+    "state": "",
+    "violation": ""
 }}
 
 Question:
@@ -68,9 +83,7 @@ Question:
 
 def answer(question: str):
 
-    intent = extract_intent(
-        question
-    )
+    intent = extract_intent(question)
 
     state = intent.get(
         "state",
@@ -82,19 +95,54 @@ def answer(question: str):
         ""
     )
 
-    print("QUESTION:", question)
-    print("STATE:", state)
+    print("=" * 50)
+    print("QUESTION :", question)
+    print("STATE    :", state)
     print("VIOLATION:", violation)
+    print("=" * 50)
 
-    # State-aware search
+    # ---------------------------------
+    # Violation synonym mapping
+    # ---------------------------------
 
-    if state and violation:
+    violation_map = {
+        "overspeeding": "speed",
+        "over speed": "speed",
+        "speeding": "speed",
+        "helmet": "helmet",
+        "triple riding": "triple",
+        "seat belt": "seat",
+        "insurance": "insurance",
+        "pollution": "pollution",
+        "license": "licence",
+        "licence": "licence",
+        "mobile phone": "mobile",
+        "drunk driving": "drunk"
+    }
 
-        penalty = (
-            search_violation_by_state(
-                state,
-                violation
-            )
+    search_term = violation.lower()
+
+    for key, value in violation_map.items():
+
+        if key in search_term:
+
+            search_term = value
+            break
+
+    # ---------------------------------
+    # State-aware penalty lookup
+    # ---------------------------------
+
+    if state and search_term:
+
+        penalty = search_violation_by_state(
+            state,
+            search_term
+        )
+
+        print(
+            "STATE SEARCH RESULT:",
+            penalty
         )
 
         if penalty:
@@ -108,23 +156,83 @@ def answer(question: str):
                 f"{penalty.source_url}"
             )
 
-    # Fallback search
+    # ---------------------------------
+    # General law questions
+    # ---------------------------------
 
-    penalty = search_violation(
-        question
-    )
+    general_questions = [
+        "what is",
+        "how to",
+        "how do",
+        "minimum age",
+        "learner",
+        "digilocker",
+        "documents",
+        "rc",
+        "registration",
+        "validity",
+        "can i",
+        "can a",
+        "why",
+        "when"
+    ]
 
-    if penalty:
-
-        return (
-            f"Violation: {penalty.violation}\n\n"
-            f"State: {penalty.state}\n\n"
-            f"Fine: ₹{penalty.fine_amount}\n\n"
-            f"Section: {penalty.section}\n\n"
-            f"Source:\n"
-            f"{penalty.source_url}"
+    if any(
+        phrase in question.lower()
+        for phrase in general_questions
+    ):
+        return answer_with_rag(
+            question
         )
 
-       # RAG Fallback
+    # ---------------------------------
+    # Generic penalty lookup
+    # ---------------------------------
 
-    return answer_with_rag(question)
+    penalty_keywords = [
+        "fine",
+        "penalty",
+        "challan",
+        "helmet",
+        "triple riding",
+        "overspeed",
+        "speeding",
+        "seat belt",
+        "drunk driving",
+        "mobile phone",
+        "insurance",
+        "pollution"
+    ]
+
+    if any(
+        keyword in question.lower()
+        for keyword in penalty_keywords
+    ):
+
+        penalty = search_violation(
+            question
+        )
+
+        print(
+            "GENERIC SEARCH RESULT:",
+            penalty
+        )
+
+        if penalty:
+
+            return (
+                f"Violation: {penalty.violation}\n\n"
+                f"State: {penalty.state}\n\n"
+                f"Fine: ₹{penalty.fine_amount}\n\n"
+                f"Section: {penalty.section}\n\n"
+                f"Source:\n"
+                f"{penalty.source_url}"
+            )
+
+    # ---------------------------------
+    # Final fallback
+    # ---------------------------------
+
+    return answer_with_rag(
+        question
+    )

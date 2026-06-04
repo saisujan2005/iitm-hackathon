@@ -8,20 +8,27 @@ def search_violation(question: str):
 
     try:
 
-        violations = db.query(
+        penalties = db.query(
             Penalty
         ).all()
 
         question = question.lower()
 
-        for violation in violations:
+        for penalty in penalties:
 
-            violation_name = (
-                violation.violation.lower()
+            if not penalty.violation:
+                continue
+
+            violation = (
+                penalty.violation.lower()
             )
 
-            if violation_name in question:
-                return violation
+            # require a more meaningful match
+            if (
+                len(violation) > 15
+                and violation in question
+            ):
+                return penalty
 
         return None
 
@@ -33,6 +40,9 @@ def search_violation_by_state(
     state: str,
     violation: str
 ):
+    
+    if not state or not violation:
+        return None
 
     db = SessionLocal()
 
