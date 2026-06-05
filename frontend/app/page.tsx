@@ -30,13 +30,9 @@ export default function Home() {
 
   const [loading, setLoading] = useState(false);
 
-  const [online, setOnline] = useState(true);
+  const [online, setOnline] = useState(false);
 
   const [locationName, setLocationName] = useState("Detecting...");
-
-  const [city, setCity] = useState("");
-  
-  const [detectedState, setDetectedState] = useState("");
 
   const [history, setHistory] = useState<any[]>([]);
 
@@ -64,112 +60,12 @@ const states = [
   "Uttar Pradesh",
   "West Bengal",
 ];
-
   useEffect(() => {
+    // Set correct value on page load
+    setOnline(navigator.onLine);
 
-    if (!navigator.geolocation) {
-      setLocationName("Location not supported");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-
-        try {
-
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-          );
-
-          const data = await res.json();
-
-          console.log("Location:", data);
-
-          const detectedState =
-            data.address.state || "";
-
-          const city =
-            data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            "";
-
-          setLocationName(
-            `${city}, ${detectedState}`
-          );
-
-          if (
-            detectedState
-              .toLowerCase()
-              .includes("karnataka")
-          ) {
-            setState("Karnataka");
-          }
-
-          if (
-            detectedState
-              .toLowerCase()
-              .includes("delhi")
-          ) {
-            setState("Delhi");
-          }
-
-        } catch (err) {
-          console.error(
-            "Reverse geocoding failed:",
-            err
-          );
-
-          setLocationName(
-            "Location unavailable"
-          );
-        }
-      },
-
-      (err) => {
-        console.error(
-          "Geolocation error:",
-          err
-        );
-
-        setLocationName(
-          "Location unavailable"
-        );
-      }
-    );
-
-  }, []);
-  useEffect(() => {
-
-  const savedFine =
-    localStorage.getItem("lastFine");
-
-  if (savedFine) {
-
-    setFine(
-      JSON.parse(savedFine)
-    );
-  }
-
-  const savedHistory =
-    localStorage.getItem(
-      "searchHistory"
-    );
-
-  if (savedHistory) {
-
-    setHistory(
-      JSON.parse(savedHistory)
-    );
-  }
-
-}, []);
-
-  useEffect(() => {
     const updateStatus = () => {
+      console.log("Online status:", navigator.onLine);
       setOnline(navigator.onLine);
     };
 
@@ -183,40 +79,81 @@ const states = [
   }, []);
 
   useEffect(() => {
-  const fetchViolations = async () => {
-    try {
-      const res = await fetch(
-        `http://127.0.0.1:8000/violations/${state}`
-      );
-
-      const data = await res.json();
-
-      console.log("Violations:", data);
-
-      setViolations(data);
-
-      localStorage.setItem(
-        `violations-${state}`,
-        JSON.stringify(data)
-      );
-
-      const cached =
-        localStorage.getItem(
-          `violations-${state}`
+    const checkConnection = async () => {
+      try {
+        await fetch(
+          "https://www.google.com/favicon.ico",
+          {
+            mode: "no-cors",
+            cache: "no-store",
+          }
         );
 
-      if (cached) {
-
-        const data =
-          JSON.parse(cached);
-
-        setViolations(data);
-
+        setOnline(true);
+      } catch {
+        setOnline(false);
       }
+    };
 
-      if (data.length > 0) {
-        setViolation(data[0].violation);
+    checkConnection();
+
+    const interval = setInterval(
+      checkConnection,
+      5000
+    );
+
+    return () => clearInterval(interval);
+  }, []);
+
+ 
+    useEffect(() => {
+      const saved = localStorage.getItem("chatHistory");
+
+      if (saved) {
+        setMessages(JSON.parse(saved));
       }
+    }, []);
+
+    useEffect(() => {
+      localStorage.setItem(
+        "chatHistory",
+        JSON.stringify(messages)
+      );
+    }, [messages]);
+
+
+  useEffect(() => {
+  const fetchViolations = async () => {
+    try {
+      const cached = localStorage.getItem(
+    `violations-${state}`
+  );
+
+  if (cached) {
+    setViolations(JSON.parse(cached));
+  } 
+  console.log("Fetching violations for state:", state);
+  const res = await fetch(
+    `http://127.0.0.1:8000/violations/${state}`
+  );
+
+  const data = await res.json();
+  console.log("Returned count:", data.length);
+  console.log("Returned data:", data);
+
+  setViolations(data);
+  console.log("First record:", data[0]);
+
+  localStorage.setItem(
+    `violations-${state}`,
+    JSON.stringify(data)
+  );
+  if (data.length > 0) {
+    setViolation(data[0].violation);
+    console.log("Setting violation to:", data[0].violation);
+  }else{
+    setViolation("")
+  }
 
     } catch (err) {
       console.error(err);
@@ -225,61 +162,10 @@ const states = [
 
      fetchViolations();
 },     [state]);
-  useEffect(() => {
+useEffect(() => {
+  console.log("STATE CHANGED TO:", state);
+}, [state]);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-
-        try {
-
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-          );
-
-          const data = await res.json();
-
-          const detectedState =
-            data.address.state || "";
-
-          const city =
-            data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            "";
-
-          setLocationName(
-            `${city}, ${detectedState}`
-          );
-
-          if (
-            detectedState
-              .toLowerCase()
-              .includes("karnataka")
-          ) {
-            setState("Karnataka");
-          }
-
-          if (
-            detectedState
-              .toLowerCase()
-              .includes("delhi")
-          ) {
-            setState("Delhi");
-          }
-
-        } catch (err) {
-          console.error(err);
-        }
-      },
-      (err) => {
-        console.error(err);
-      }
-    );
-
-  }, []);
 
 const handleSend = async () => {
   if (!query.trim()) return;
@@ -344,21 +230,27 @@ const detectLocation = () => {
 
         const data = await res.json();
 
-        setCity(
-             data.address.county || ""
-        );
+        const city =
+          data.address.city ||
+          data.address.county ||
+          data.address.town ||
+          data.address.village ||
+          data.address.municipality ||
+          data.address.suburb ||
+          "";
 
-        setDetectedState(
-            data.address.state || ""
-      );
-
-        const detectedState =
-          data.address.state;
+        const detectedState = 
+            data.address.state || "";
 
         console.log(
           "Detected State:",
            detectedState
-);  
+        );  
+        console.log(
+          "Detected city:",
+           city
+        );
+        setLocationName(city + ", "  + detectedState);
 
         if (
           detectedState?.includes(
@@ -384,16 +276,6 @@ const detectLocation = () => {
           setState("Maharashtra");
         }
 
-        else if (
-          detectedState?.includes(
-             "Tamil Nadu"
-       )
-     ) {
-          setState(
-           "Tamil Nadu"
-     );
-  }
-
       } catch (err) {
 
         console.error(err);
@@ -402,7 +284,8 @@ const detectLocation = () => {
 
     }
   );
-};useEffect(() => {
+};
+useEffect(() => {
 
   detectLocation();
 
@@ -614,6 +497,7 @@ const uploadChallan = async () => {
   </select>
 
   <select
+    key={state}
     value={violation}
     onChange={(e) => setViolation(e.target.value)}
     className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3"
@@ -641,16 +525,12 @@ const uploadChallan = async () => {
           Calculate Fine
         </button>
 
-        <div className="mt-6 bg-zinc-800 rounded-2xl p-4">
-          <p className="text-zinc-400 text-sm mb-1">
+        <div className="mt-6 bg-zinc-800 rounded-1xl p-4">
+          <p className="text-zinc-400 text-2xl mb-1">
             Estimated Fine
           </p>
           {fine && (
-  <div className="mt-6 bg-zinc-800 rounded-2xl p-4">
-    <p className="text-zinc-400 text-sm mb-1">
-      Estimated Fine
-    </p>
-
+  <div className="mt-6 bg-zinc-800 rounded-1xl p-1">  
     {fine.error ? (
       <p className="text-red-400">
         {fine.error}
@@ -677,7 +557,7 @@ const uploadChallan = async () => {
         </p>
 
         {fine.source_url && (
-          <p className="text-xs text-zinc-500 mt-3 break-all">
+          <p className="text-sm text-zinc-500 mt-3 break-all">
             Source: {fine.source_url}
           </p>
         )}
@@ -686,34 +566,6 @@ const uploadChallan = async () => {
   </div>
   
 )}
-    {history.length > 0 && (
-
-      <div className="mt-6 bg-zinc-800 rounded-xl p-4">
-
-        <h3 className="font-semibold mb-3">
-          Recent Searches
-        </h3>
-
-        {history.map((item, index) => (
-
-          <div
-            key={index}
-            className="py-2 border-b border-zinc-700"
-          >
-
-            <p>{item.violation}</p>
-
-            <p className="text-xs text-zinc-400">
-              {item.state} • ₹{item.fine}
-            </p>
-
-          </div>
-
-        ))}
-
-      </div>
-
-    )}
           
        </div>
       </div>
